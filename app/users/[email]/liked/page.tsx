@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import PostCard from '@/components/PostCard'
 import Link from 'next/link'
@@ -93,6 +93,8 @@ export default async function UserLikedPostsPage({ params }: { params: Promise<{
                 post={{
                   ...post,
                   likeCount: (post as any).likeCount || 0,
+                  tags: post.tags ?? undefined,
+                  category: post.category ?? undefined,
                 }}
               />
             ))}

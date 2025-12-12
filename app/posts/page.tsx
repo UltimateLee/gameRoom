@@ -1,11 +1,11 @@
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import PostList from '@/components/PostList'
 
 interface PostsPageProps {
-  searchParams: Promise<{ page?: string; search?: string; category?: string }>
+  searchParams: Promise<{ page?: string; search?: string; category?: string; sort?: string; tag?: string }>
 }
 
 export default async function PostsPage({ searchParams }: PostsPageProps) {
@@ -95,6 +95,8 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
           initialPosts={posts.map((post) => ({
             ...post,
             likeCount: (post as any).likeCount || 0,
+            tags: post.tags ?? undefined,
+            category: post.category ?? undefined,
           }))}
           initialPage={page}
           initialTotalPages={totalPages}

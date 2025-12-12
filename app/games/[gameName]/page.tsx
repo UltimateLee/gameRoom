@@ -179,6 +179,8 @@ export default async function GameDetailPage({ params, searchParams }: GamePageP
                 post={{
                   ...post,
                   likeCount: (post as any).likeCount || 0,
+                  tags: post.tags ?? undefined,
+                  category: post.category ?? undefined,
                 }}
               />
             ))}

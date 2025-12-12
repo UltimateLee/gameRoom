@@ -10,9 +10,13 @@ interface Post {
   content: string
   createdAt: Date
   viewCount?: number
+  likeCount?: number
+  category?: string
+  tags?: string
   author: {
     name: string | null
     email: string
+    image?: string | null
   }
   comments: Array<{ id: string }>
 }

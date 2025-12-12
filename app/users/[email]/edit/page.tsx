@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
@@ -21,23 +21,7 @@ export default function EditProfilePage() {
 
   const userEmail = params?.email ? decodeURIComponent(params.email as string) : ''
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login')
-      return
-    }
-
-    if (status === 'authenticated' && session?.user?.email !== userEmail) {
-      router.push(`/users/${encodeURIComponent(session.user.email || '')}`)
-      return
-    }
-
-    if (status === 'authenticated' && userEmail) {
-      fetchProfile()
-    }
-  }, [status, session, userEmail, router])
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       const response = await fetch(`/api/users/${encodeURIComponent(userEmail)}`)
       if (response.ok) {
@@ -52,7 +36,23 @@ export default function EditProfilePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [userEmail])
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login')
+      return
+    }
+
+    if (status === 'authenticated' && session?.user?.email !== userEmail) {
+      router.push(`/users/${encodeURIComponent(session.user.email || '')}`)
+      return
+    }
+
+    if (status === 'authenticated' && userEmail) {
+      fetchProfile()
+    }
+  }, [status, session, userEmail, router, fetchProfile])
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]

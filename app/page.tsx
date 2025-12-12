@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import PostCard from '@/components/PostCard'
 
@@ -47,12 +47,16 @@ export default async function Home() {
     ...post,
     viewCount: (post as any).viewCount || 0,
     likeCount: (post as any).likeCount || 0,
+    tags: post.tags ?? undefined,
+    category: post.category ?? undefined,
   }))
 
   const popularPostsWithViewCount = popularPosts.map((post) => ({
     ...post,
     viewCount: (post as any).viewCount || 0,
     likeCount: (post as any).likeCount || 0,
+    tags: post.tags ?? undefined,
+    category: post.category ?? undefined,
   }))
 
   return (
