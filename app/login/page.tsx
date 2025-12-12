@@ -65,23 +65,6 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        {/* 헤더 */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6 group">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center transform group-hover:rotate-6 transition-transform duration-300 shadow-lg shadow-primary-500/30">
-              <span className="text-white font-bold text-xl">C</span>
-            </div>
-          </Link>
-          <h2 className="text-4xl font-extrabold text-gray-900 mb-2 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-            {isLogin ? '로그인' : '회원가입'}
-          </h2>
-          <p className="text-gray-600 text-sm">
-            {isLogin ? '커뮤니티에 오신 것을 환영합니다' : '새로운 계정을 만들어보세요'}
-          </p>
-        </div>
-
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 flex items-center justify-center py-8 sm:py-12 px-3 sm:px-4 lg:px-8">
       <div className="max-w-md w-full">
         {/* 헤더 */}
