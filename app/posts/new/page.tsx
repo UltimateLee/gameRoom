@@ -34,6 +34,22 @@ export default function NewPostPage() {
     if (categoryParam) {
       setCategory(categoryParam)
     }
+    
+    // AI 추천에서 넘어온 경우 게임 정보 자동 입력
+    const gameName = searchParams.get('gameName')
+    const platform = searchParams.get('platform')
+    const genre = searchParams.get('genre')
+    if (gameName || platform || genre) {
+      setGameInfo(prev => ({
+        gameName: gameName || prev.gameName,
+        platform: platform || prev.platform,
+        genre: genre || prev.genre,
+        rating: prev.rating,
+      }))
+      if (categoryParam !== 'game-recommend') {
+        setCategory('game-recommend')
+      }
+    }
   }, [status, router, searchParams])
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, blockIndex: number) => {
