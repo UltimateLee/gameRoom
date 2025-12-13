@@ -4,23 +4,11 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale/ko'
-import dynamic from 'next/dynamic'
-
-const CommentSection = dynamic(() => import('@/components/CommentSection'), {
-  ssr: true,
-})
-const DeleteButton = dynamic(() => import('@/components/DeleteButton'), {
-  ssr: false,
-})
-const LikeButton = dynamic(() => import('@/components/LikeButton'), {
-  ssr: false,
-})
-const BookmarkButton = dynamic(() => import('@/components/BookmarkButton'), {
-  ssr: false,
-})
-const ShareButton = dynamic(() => import('@/components/ShareButton'), {
-  ssr: false,
-})
+import CommentSection from '@/components/CommentSection'
+import DeleteButton from '@/components/DeleteButton'
+import LikeButton from '@/components/LikeButton'
+import BookmarkButton from '@/components/BookmarkButton'
+import ShareButton from '@/components/ShareButton'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -282,6 +270,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                     <div className="relative aspect-video rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
                       {block.url && (
                         block.url.startsWith('data:') ? (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={block.url}
                             alt={`Image ${index + 1}`}
@@ -310,6 +299,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                     {images.map((url: string, index: number) => (
                       <div key={index} className="relative aspect-video rounded-lg overflow-hidden border border-gray-200">
                         {url.startsWith('data:') ? (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={url}
                             alt={`Image ${index + 1}`}

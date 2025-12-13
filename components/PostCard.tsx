@@ -51,15 +51,6 @@ function PostCard({ post }: PostCardProps) {
     router.push(`/posts?tag=${encodeURIComponent(tag)}`)
   }, [router])
 
-  const handleCardClick = () => {
-    router.push(`/posts/${post.id}`)
-  }
-
-  const handleTagClick = (e: React.MouseEvent, tag: string) => {
-    e.stopPropagation()
-    router.push(`/posts?tag=${encodeURIComponent(tag)}`)
-  }
-
   return (
     <article 
       onClick={handleCardClick}
@@ -125,7 +116,7 @@ function PostCard({ post }: PostCardProps) {
             )}
             <span className="text-gray-300 hidden sm:inline">•</span>
             <span className="text-gray-500 text-xs">
-              {format(new Date(post.createdAt), 'M월 d일', { locale: ko })}
+              {formattedDate}
             </span>
           </div>
           <div className="flex items-center gap-3 sm:gap-4 text-xs">

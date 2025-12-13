@@ -159,6 +159,35 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     setContentBlocks(newBlocks)
   }
 
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+  }
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault()
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null)
+      return
+    }
+
+    const newBlocks = [...contentBlocks]
+    const draggedBlock = newBlocks[draggedIndex]
+    
+    newBlocks.splice(draggedIndex, 1)
+    newBlocks.splice(dropIndex, 0, draggedBlock)
+    
+    setContentBlocks(newBlocks)
+    setDraggedIndex(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!postId) return
@@ -490,6 +519,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                       {block.url && (
                         <div className="relative aspect-video rounded-lg overflow-hidden border border-gray-300 bg-white">
                           {block.url.startsWith('data:') ? (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={block.url}
                               alt={`Image ${index + 1}`}

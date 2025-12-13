@@ -180,3 +180,5 @@ function CommentSection({ postId, comments: initialComments }: CommentSectionPro
   )
 }
 
+export default memo(CommentSection)
+

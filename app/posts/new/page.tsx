@@ -446,6 +446,7 @@ export default function NewPostPage() {
                       {block.url && (
                         <div className="relative aspect-video rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
                           {block.url.startsWith('data:') ? (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={block.url}
                               alt={`Image ${index + 1}`}
