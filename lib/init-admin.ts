@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
-const ADMIN_EMAIL = 'admin'
+const ADMIN_EMAIL = 'admin@game.com'
 const ADMIN_PASSWORD = 'admin123'
 
 export async function ensureAdminExists() {

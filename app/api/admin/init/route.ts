@@ -9,14 +9,14 @@ export async function POST() {
       return NextResponse.json({
         success: true,
         message: '어드민 계정이 생성되었습니다.',
-        email: 'admin',
+        email: 'admin@game.com',
         password: 'admin123',
       })
     } else if (result.exists) {
       return NextResponse.json({
         success: true,
         message: '어드민 계정이 이미 존재합니다.',
-        email: 'admin',
+        email: 'admin@game.com',
       })
     } else {
       return NextResponse.json(
@@ -40,7 +40,7 @@ export async function GET() {
       success: true,
       created: result.created,
       exists: result.exists,
-      email: 'admin',
+      email: 'admin@game.com',
     })
   } catch (error: any) {
     return NextResponse.json(

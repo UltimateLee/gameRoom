@@ -18,7 +18,7 @@ npx prisma migrate deploy
 
 **기본 어드민 계정이 자동으로 생성됩니다!**
 
-- **이메일**: `admin`
+- **이메일**: `admin@game.com`
 - **비밀번호**: `admin123`
 
 ### 자동 생성 시점
