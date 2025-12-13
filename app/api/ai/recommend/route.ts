@@ -3,18 +3,46 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 
 export async function POST(request: Request) {
   try {
-    const { preferences, platform, genre, playStyle } = await request.json()
+    let body
+    try {
+      body = await request.json()
+    } catch (error) {
+      return NextResponse.json(
+        { error: '잘못된 요청 형식입니다.' },
+        { status: 400 }
+      )
+    }
+
+    const { preferences, platform, genre, playStyle } = body
+
+    if (!preferences || preferences.trim() === '') {
+      return NextResponse.json(
+        { error: '선호도/요구사항을 입력해주세요.' },
+        { status: 400 }
+      )
+    }
 
     const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) {
+      console.error('GEMINI_API_KEY가 설정되지 않았습니다.')
       return NextResponse.json(
         { error: 'Gemini API 키가 설정되지 않았습니다.' },
         { status: 500 }
       )
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
+    let genAI
+    let model
+    try {
+      genAI = new GoogleGenerativeAI(apiKey)
+      model = genAI.getGenerativeModel({ model: 'gemini-pro' })
+    } catch (error: any) {
+      console.error('Gemini API 초기화 오류:', error)
+      return NextResponse.json(
+        { error: 'AI 서비스를 초기화하는 중 오류가 발생했습니다.' },
+        { status: 500 }
+      )
+    }
 
     // 사용자 선호도 기반 프롬프트 생성
     let prompt = `당신은 게임 추천 전문가입니다. 사용자의 선호도에 맞는 게임을 추천해주세요.
@@ -37,21 +65,56 @@ ${playStyle ? `- 플레이 스타일: ${playStyle}` : ''}
 
 한국어로 답변해주세요.`
 
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    const text = response.text()
+    let result
+    let response
+    let text
+    
+    try {
+      result = await model.generateContent(prompt)
+      response = await result.response
+      text = response.text()
+    } catch (error: any) {
+      console.error('Gemini API 호출 오류:', error)
+      // API 호출 실패 시에도 기본 추천 제공
+      return NextResponse.json({
+        recommendations: [{
+          gameName: '게임 추천',
+          platform: platform || '다양',
+          genre: genre || '다양',
+          reason: 'AI 서비스에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.',
+          rating: 0,
+        }],
+        error: 'AI 서비스에 일시적인 문제가 발생했습니다.',
+      })
+    }
 
     // 응답 파싱
     const recommendations = parseRecommendations(text)
+
+    if (recommendations.length === 0) {
+      return NextResponse.json({
+        recommendations: [{
+          gameName: '게임 추천',
+          platform: platform || '다양',
+          genre: genre || '다양',
+          reason: text.substring(0, 200) || 'AI가 추천하는 게임입니다.',
+          rating: 8,
+        }],
+        rawResponse: text,
+      })
+    }
 
     return NextResponse.json({
       recommendations,
       rawResponse: text,
     })
   } catch (error: any) {
-    console.error('Gemini API 오류:', error)
+    console.error('게임 추천 API 오류:', error)
     return NextResponse.json(
-      { error: '게임 추천을 생성하는 중 오류가 발생했습니다.', details: error.message },
+      { 
+        error: '게임 추천을 생성하는 중 오류가 발생했습니다.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      },
       { status: 500 }
     )
   }

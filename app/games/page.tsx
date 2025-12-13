@@ -17,21 +17,22 @@ interface GameStats {
 }
 
 export default async function GamesPage() {
-  // 게임 추천 게시글만 가져오기
-  const gamePosts = await prisma.post.findMany({
-    where: {
-      category: 'game-recommend',
-      gameInfo: { not: null },
-    },
-    include: {
-      author: {
-        select: {
-          name: true,
-          email: true,
+  try {
+    // 게임 추천 게시글만 가져오기
+    const gamePosts = await prisma.post.findMany({
+      where: {
+        category: 'game-recommend',
+        gameInfo: { not: null },
+      },
+      include: {
+        author: {
+          select: {
+            name: true,
+            email: true,
+          },
         },
       },
-    },
-  })
+    })
 
   // 게임별 통계 계산
   const gameStatsMap = new Map<string, GameStats>()
@@ -199,5 +200,9 @@ export default async function GamesPage() {
       </div>
     </div>
   )
+  } catch (error) {
+    console.error('Games page error:', error)
+    throw error
+  }
 }
 
