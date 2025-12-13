@@ -169,18 +169,27 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   const handleDrop = (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault()
+    e.stopPropagation()
+    
     if (draggedIndex === null || draggedIndex === dropIndex) {
       setDraggedIndex(null)
       return
     }
 
-    const newBlocks = [...contentBlocks]
-    const draggedBlock = newBlocks[draggedIndex]
+    setContentBlocks((prevBlocks) => {
+      const newBlocks = [...prevBlocks]
+      const draggedBlock = newBlocks[draggedIndex]
+      
+      // 드래그된 블록 제거
+      newBlocks.splice(draggedIndex, 1)
+      
+      // 새로운 위치에 삽입
+      const insertIndex = draggedIndex < dropIndex ? dropIndex - 1 : dropIndex
+      newBlocks.splice(insertIndex, 0, draggedBlock)
+      
+      return newBlocks
+    })
     
-    newBlocks.splice(draggedIndex, 1)
-    newBlocks.splice(dropIndex, 0, draggedBlock)
-    
-    setContentBlocks(newBlocks)
     setDraggedIndex(null)
   }
 
@@ -432,7 +441,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             <div className="space-y-3 sm:space-y-4">
               {contentBlocks.map((block, index) => (
                 <div
-                  key={index}
+                  key={`block-${index}-${block.type}-${block.url || block.content?.substring(0, 10)}`}
                   draggable
                   onDragStart={() => handleDragStart(index)}
                   onDragOver={handleDragOver}
