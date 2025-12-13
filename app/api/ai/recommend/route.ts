@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenAI } from '@google/genai'
 
 export async function POST(request: Request) {
   try {
@@ -31,9 +31,12 @@ export async function POST(request: Request) {
       )
     }
 
-    let genAI
+    // GoogleGenAI 초기화 (API 키는 환경 변수에서 자동으로 가져옴)
+    let ai
     try {
-      genAI = new GoogleGenerativeAI(apiKey)
+      // 환경 변수에 API 키 설정
+      process.env.GEMINI_API_KEY = apiKey
+      ai = new GoogleGenAI({})
     } catch (error: any) {
       console.error('Gemini API 초기화 오류:', error)
       return NextResponse.json(
@@ -63,52 +66,42 @@ ${playStyle ? `- 플레이 스타일: ${playStyle}` : ''}
 
 한국어로 답변해주세요.`
 
-    // 사용 가능한 모델 목록 시도 (우선순위 순)
-    // v1beta API에서는 모델 이름 형식이 다를 수 있음
+    // 사용 가능한 모델 목록 시도 (공식 예제에 따라 gemini-2.5-flash 우선)
     const modelNames = [
-      'models/gemini-1.5-flash-latest',
-      'models/gemini-1.5-flash-001',
-      'models/gemini-1.5-flash',
-      'models/gemini-1.5-pro-latest',
-      'models/gemini-1.5-pro-001',
-      'models/gemini-1.5-pro',
-      'models/gemini-pro-vision',
-      'models/gemini-pro',
-      // models/ 접두사 없이도 시도
+      'gemini-2.5-flash',
+      'gemini-2.0-flash-exp',
       'gemini-1.5-flash-latest',
       'gemini-1.5-flash-001',
       'gemini-1.5-flash',
       'gemini-1.5-pro-latest',
       'gemini-1.5-pro-001',
       'gemini-1.5-pro',
-      'gemini-pro-vision',
-      'gemini-pro',
     ]
     
-    let result
-    let response
     let text: string | undefined
     let lastError: any = null
     let successfulModel: string | null = null
     
+    // 공식 SDK 방식으로 시도
     for (const modelName of modelNames) {
       try {
-        const model = genAI.getGenerativeModel({ model: modelName })
         console.log(`모델 ${modelName} 시도 중...`)
         
-        result = await model.generateContent(prompt)
-        response = await result.response
-        text = response.text()
+        const response = await ai.models.generateContent({
+          model: modelName,
+          contents: prompt,
+        })
         
+        text = response.text
         successfulModel = modelName
         console.log(`모델 ${modelName} 성공!`)
         break // 성공하면 루프 종료
       } catch (error: any) {
         lastError = error
-        console.log(`모델 ${modelName} 실패:`, error.status, error.statusText || error.message)
+        console.log(`모델 ${modelName} 실패:`, error.status || error.statusCode, error.message || error.statusText)
         
         // 404 오류가 아니면 다른 오류이므로 중단
-        if (error.status !== 404 && error.status !== 400) {
+        if (error.status !== 404 && error.statusCode !== 404 && error.status !== 400 && error.statusCode !== 400) {
           console.error('예상치 못한 오류:', error)
           break
         }
@@ -122,15 +115,13 @@ ${playStyle ? `- 플레이 스타일: ${playStyle}` : ''}
     if (!text) {
       console.error('모든 Gemini 모델 시도 실패. 마지막 오류:', lastError)
       console.error('시도한 모델 목록:', modelNames)
-      console.error('조회된 사용 가능한 모델:', availableModels)
       
       return NextResponse.json(
         { 
           error: '사용 가능한 AI 모델을 찾을 수 없습니다. API 키와 모델 설정을 확인해주세요.',
           details: process.env.NODE_ENV === 'development' ? {
-            lastError: lastError?.message || lastError?.statusText,
+            lastError: lastError?.message || lastError?.statusText || lastError,
             triedModels: modelNames,
-            availableModels: availableModels.length > 0 ? availableModels : '조회 실패 - API 키 권한 확인 필요',
             hint: 'Google AI Studio에서 API 키 권한과 사용 가능한 모델을 확인하세요: https://makersuite.google.com/app/apikey'
           } : undefined
         },
