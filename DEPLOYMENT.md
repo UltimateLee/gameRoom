@@ -104,3 +104,5 @@ Vercel Postgres 외에도 다음을 사용할 수 있습니다:
 - SSL 모드가 필요한 경우 `?sslmode=require` 추가
 - 방화벽 설정 확인
 
+
+

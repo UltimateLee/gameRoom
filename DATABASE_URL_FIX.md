@@ -74,3 +74,5 @@ npx prisma db push
 
 성공하면 연결이 정상입니다.
 
+
+
