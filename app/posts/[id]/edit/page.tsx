@@ -133,10 +133,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         newBlocks.splice(blockIndex + 1, 0, ...imageBlocks)
         setContentBlocks(newBlocks)
       } else {
-        setError('이미지 업로드에 실패했습니다.')
+        setError(data.error || data.details || '이미지 업로드에 실패했습니다.')
       }
-    } catch (err) {
-      setError('이미지 업로드 중 오류가 발생했습니다.')
+    } catch (err: any) {
+      setError(err.message || '이미지 업로드 중 오류가 발생했습니다.')
     } finally {
       setUploading(false)
       setUploadingIndex(null)
@@ -467,12 +467,21 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                       </div>
                       {block.url && (
                         <div className="relative aspect-video rounded-lg overflow-hidden border border-gray-300 bg-white">
-                          <Image
-                            src={block.url}
-                            alt={`Image ${index + 1}`}
-                            fill
-                            className="object-contain"
-                          />
+                          {block.url.startsWith('data:') ? (
+                            <img
+                              src={block.url}
+                              alt={`Image ${index + 1}`}
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <Image
+                              src={block.url}
+                              alt={`Image ${index + 1}`}
+                              fill
+                              className="object-contain"
+                              unoptimized={block.url.startsWith('/uploads/')}
+                            />
+                          )}
                         </div>
                       )}
                       {uploading && uploadingIndex === index && (

@@ -255,12 +255,21 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                   ) : (
                     <div className="relative aspect-video rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
                       {block.url && (
-                        <Image
-                          src={block.url}
-                          alt={`Image ${index + 1}`}
-                          fill
-                          className="object-contain"
-                        />
+                        block.url.startsWith('data:') ? (
+                          <img
+                            src={block.url}
+                            alt={`Image ${index + 1}`}
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <Image
+                            src={block.url}
+                            alt={`Image ${index + 1}`}
+                            fill
+                            className="object-contain"
+                            unoptimized={block.url.startsWith('/uploads/')}
+                          />
+                        )
                       )}
                     </div>
                   )}
@@ -274,12 +283,21 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {images.map((url: string, index: number) => (
                       <div key={index} className="relative aspect-video rounded-lg overflow-hidden border border-gray-200">
-                        <Image
-                          src={url}
-                          alt={`Image ${index + 1}`}
-                          fill
-                          className="object-cover"
-                        />
+                        {url.startsWith('data:') ? (
+                          <img
+                            src={url}
+                            alt={`Image ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Image
+                            src={url}
+                            alt={`Image ${index + 1}`}
+                            fill
+                            className="object-cover"
+                            unoptimized={url.startsWith('/uploads/')}
+                          />
+                        )}
                       </div>
                     ))}
                   </div>

@@ -17,6 +17,7 @@ model User {
   password  String
   image     String?
   bio       String?  // 자기소개
+  isAdmin   Boolean  @default(false) // 어드민 권한
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   posts     Post[]

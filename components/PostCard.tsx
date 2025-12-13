@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale/ko'
 import Image from 'next/image'
@@ -25,37 +25,48 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
+  const router = useRouter()
   const preview = post.content.length > 200 
     ? post.content.substring(0, 200) + '...' 
     : post.content
 
   const tags = post.tags ? (typeof post.tags === 'string' ? JSON.parse(post.tags) : post.tags) : []
 
+  const handleCardClick = () => {
+    router.push(`/posts/${post.id}`)
+  }
+
+  const handleTagClick = (e: React.MouseEvent, tag: string) => {
+    e.stopPropagation()
+    router.push(`/posts?tag=${encodeURIComponent(tag)}`)
+  }
+
   return (
-    <Link href={`/posts/${post.id}`} className="block group">
-      <article className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 hover:shadow-xl hover:border-primary-200 transition-all duration-300 transform hover:-translate-y-1">
-        <div className="flex items-start justify-between gap-3 sm:gap-4 mb-2 sm:mb-3">
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors line-clamp-2 flex-1">
-            {post.title}
-          </h2>
+    <article 
+      onClick={handleCardClick}
+      className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 hover:shadow-xl hover:border-primary-200 transition-all duration-300 transform hover:-translate-y-1 cursor-pointer group"
+    >
+      <div className="flex items-start justify-between gap-3 sm:gap-4 mb-2 sm:mb-3">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors line-clamp-2 flex-1">
+          {post.title}
+        </h2>
+      </div>
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+          {tags.slice(0, 3).map((tag: string, index: number) => (
+            <button
+              key={index}
+              onClick={(e) => handleTagClick(e, tag)}
+              className="inline-flex items-center px-2 py-0.5 bg-primary-50 text-primary-700 rounded-full text-xs font-medium hover:bg-primary-100 transition-colors"
+            >
+              #{tag}
+            </button>
+          ))}
+          {tags.length > 3 && (
+            <span className="text-xs text-gray-500">+{tags.length - 3}</span>
+          )}
         </div>
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-            {tags.slice(0, 3).map((tag: string, index: number) => (
-              <Link
-                key={index}
-                href={`/posts?tag=${encodeURIComponent(tag)}`}
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center px-2 py-0.5 bg-primary-50 text-primary-700 rounded-full text-xs font-medium hover:bg-primary-100 transition-colors"
-              >
-                #{tag}
-              </Link>
-            ))}
-            {tags.length > 3 && (
-              <span className="text-xs text-gray-500">+{tags.length - 3}</span>
-            )}
-          </div>
-        )}
+      )}
         <p className="text-gray-600 mb-3 sm:mb-4 line-clamp-2 leading-relaxed text-xs sm:text-sm">
           {preview}
         </p>
@@ -119,7 +130,6 @@ export default function PostCard({ post }: PostCardProps) {
           </div>
         </div>
       </article>
-    </Link>
   )
 }
 

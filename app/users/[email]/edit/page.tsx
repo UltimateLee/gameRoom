@@ -83,7 +83,7 @@ export default function EditProfilePage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || '이미지 업로드에 실패했습니다.')
+        throw new Error(data.error || data.details || '이미지 업로드에 실패했습니다.')
       }
 
       if (data.urls && data.urls.length > 0) {
