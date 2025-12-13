@@ -32,12 +32,8 @@ export async function POST(request: Request) {
     }
 
     let genAI
-    let model
     try {
       genAI = new GoogleGenerativeAI(apiKey)
-      // gemini-pro가 더 이상 사용 불가능하므로 gemini-1.5-flash 사용
-      // gemini-1.5-flash는 빠르고 비용 효율적인 모델입니다
-      model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
     } catch (error: any) {
       console.error('Gemini API 초기화 오류:', error)
       return NextResponse.json(
@@ -67,27 +63,60 @@ ${playStyle ? `- 플레이 스타일: ${playStyle}` : ''}
 
 한국어로 답변해주세요.`
 
+    // 사용 가능한 모델 목록 시도 (우선순위 순)
+    // 실제 API 호출 시 여러 모델을 시도하여 작동하는 모델 찾기
+    const modelNames = [
+      'gemini-1.5-flash-latest',
+      'gemini-1.5-flash-001',
+      'gemini-1.5-flash',
+      'gemini-1.5-pro-latest',
+      'gemini-1.5-pro-001',
+      'gemini-1.5-pro',
+      'gemini-pro-vision',
+      'gemini-pro',
+    ]
+    
     let result
     let response
-    let text
+    let text: string | undefined
+    let lastError: any = null
     
-    try {
-      result = await model.generateContent(prompt)
-      response = await result.response
-      text = response.text()
-    } catch (error: any) {
-      console.error('Gemini API 호출 오류:', error)
-      // API 호출 실패 시에도 기본 추천 제공
-      return NextResponse.json({
-        recommendations: [{
-          gameName: '게임 추천',
-          platform: platform || '다양',
-          genre: genre || '다양',
-          reason: 'AI 서비스에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.',
-          rating: 0,
-        }],
-        error: 'AI 서비스에 일시적인 문제가 발생했습니다.',
-      })
+    for (const modelName of modelNames) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName })
+        console.log(`모델 ${modelName} 시도 중...`)
+        
+        result = await model.generateContent(prompt)
+        response = await result.response
+        text = response.text()
+        
+        console.log(`모델 ${modelName} 성공!`)
+        break // 성공하면 루프 종료
+      } catch (error: any) {
+        lastError = error
+        console.log(`모델 ${modelName} 실패:`, error.status, error.message)
+        
+        // 404 오류가 아니면 다른 오류이므로 중단
+        if (error.status !== 404) {
+          console.error('예상치 못한 오류:', error)
+          break
+        }
+        
+        // 404 오류면 다음 모델 시도
+        continue
+      }
+    }
+    
+    // 모든 모델 시도 실패
+    if (!text) {
+      console.error('모든 Gemini 모델 시도 실패. 마지막 오류:', lastError)
+      return NextResponse.json(
+        { 
+          error: '사용 가능한 AI 모델을 찾을 수 없습니다. API 키와 모델 설정을 확인해주세요.',
+          details: process.env.NODE_ENV === 'development' ? lastError?.message : undefined
+        },
+        { status: 500 }
+      )
     }
 
     // 응답 파싱
@@ -180,4 +209,3 @@ function parseRecommendations(text: string) {
     rating: 8,
   }]
 }
-
