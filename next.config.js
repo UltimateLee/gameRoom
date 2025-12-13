@@ -10,11 +10,17 @@ const nextConfig = {
     minimumCacheTTL: 60,
   },
   experimental: {
-    optimizePackageImports: ['date-fns', '@prisma/client'],
+    optimizePackageImports: ['date-fns'],
+  },
+  outputFileTracingIncludes: {
+    '*': [
+      './node_modules/.prisma/client/**/*',
+      './node_modules/@prisma/client/**/*',
+    ],
   },
   webpack: (config, { isServer }) => {
     if (isServer) {
-      // Prisma 바이너리 파일을 번들에 포함
+      // Prisma 바이너리 파일을 번들에 포함하지 않음 (외부 파일로 유지)
       config.externals = config.externals || []
       config.externals.push({
         '@prisma/client': '@prisma/client',
