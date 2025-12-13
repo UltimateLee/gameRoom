@@ -50,9 +50,16 @@ GEMINI_API_KEY=your-api-key-here
 - Vercel 배포 시 환경 변수가 모든 환경에 적용되었는지 확인
 - 재배포 필요할 수 있음
 
+### 오류: "models/gemini-pro is not found"
+
+- `gemini-pro` 모델이 더 이상 사용 불가능합니다
+- 최신 모델인 `gemini-1.5-flash` 또는 `gemini-1.5-pro`를 사용하세요
+- 코드가 이미 `gemini-1.5-flash`로 업데이트되었는지 확인
+
 ### 오류: "API 호출 실패"
 
 - API 키가 유효한지 확인
 - Google AI Studio에서 API 키 상태 확인
 - 네트워크 연결 확인
+- 사용 가능한 모델 목록 확인: [Google AI Studio](https://makersuite.google.com/app/apikey)
 

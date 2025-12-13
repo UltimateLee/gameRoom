@@ -35,7 +35,9 @@ export async function POST(request: Request) {
     let model
     try {
       genAI = new GoogleGenerativeAI(apiKey)
-      model = genAI.getGenerativeModel({ model: 'gemini-pro' })
+      // gemini-pro가 더 이상 사용 불가능하므로 gemini-1.5-flash 사용
+      // gemini-1.5-flash는 빠르고 비용 효율적인 모델입니다
+      model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
     } catch (error: any) {
       console.error('Gemini API 초기화 오류:', error)
       return NextResponse.json(
