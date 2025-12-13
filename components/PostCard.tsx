@@ -1,5 +1,6 @@
 'use client'
 
+import { memo, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale/ko'
@@ -24,13 +25,31 @@ interface PostCardProps {
   }
 }
 
-export default function PostCard({ post }: PostCardProps) {
+function PostCard({ post }: PostCardProps) {
   const router = useRouter()
-  const preview = post.content.length > 200 
-    ? post.content.substring(0, 200) + '...' 
-    : post.content
+  
+  const preview = useMemo(() => {
+    return post.content.length > 200 
+      ? post.content.substring(0, 200) + '...' 
+      : post.content
+  }, [post.content])
 
-  const tags = post.tags ? (typeof post.tags === 'string' ? JSON.parse(post.tags) : post.tags) : []
+  const tags = useMemo(() => {
+    return post.tags ? (typeof post.tags === 'string' ? JSON.parse(post.tags) : post.tags) : []
+  }, [post.tags])
+
+  const formattedDate = useMemo(() => {
+    return format(new Date(post.createdAt), 'M월 d일', { locale: ko })
+  }, [post.createdAt])
+
+  const handleCardClick = useCallback(() => {
+    router.push(`/posts/${post.id}`)
+  }, [router, post.id])
+
+  const handleTagClick = useCallback((e: React.MouseEvent, tag: string) => {
+    e.stopPropagation()
+    router.push(`/posts?tag=${encodeURIComponent(tag)}`)
+  }, [router])
 
   const handleCardClick = () => {
     router.push(`/posts/${post.id}`)
@@ -80,6 +99,8 @@ export default function PostCard({ post }: PostCardProps) {
                     alt={post.author.name || post.author.email}
                     fill
                     className="object-cover"
+                    sizes="(max-width: 640px) 20px, 24px"
+                    loading="lazy"
                   />
                 </div>
               ) : (
@@ -132,4 +153,6 @@ export default function PostCard({ post }: PostCardProps) {
       </article>
   )
 }
+
+export default memo(PostCard)
 

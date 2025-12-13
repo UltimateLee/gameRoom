@@ -1,13 +1,25 @@
 'use client'
 
+import { memo, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import Image from 'next/image'
-import { useState } from 'react'
 
-export default function Navbar() {
+function Navbar() {
   const { data: session, status } = useSession()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const handleSignOut = useCallback(() => {
+    signOut()
+  }, [])
+
+  const toggleMobileMenu = useCallback(() => {
+    setMobileMenuOpen(prev => !prev)
+  }, [])
+
+  const closeMobileMenu = useCallback(() => {
+    setMobileMenuOpen(false)
+  }, [])
 
   return (
     <nav className="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-100 sticky top-0 z-50">
@@ -94,7 +106,7 @@ export default function Navbar() {
                   </span>
                 </Link>
                 <button
-                  onClick={() => signOut()}
+                  onClick={handleSignOut}
                   className="text-gray-600 hover:text-red-600 transition-colors text-xs sm:text-sm px-2 sm:px-3 py-2 rounded-lg hover:bg-red-50"
                 >
                   로그아웃
@@ -123,7 +135,7 @@ export default function Navbar() {
               </Link>
             )}
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={toggleMobileMenu}
               className="p-2 text-gray-700 hover:text-primary-600 transition-colors rounded-lg hover:bg-primary-50"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,21 +154,21 @@ export default function Navbar() {
           <div className="md:hidden border-t border-gray-100 py-4 space-y-2">
             <Link
               href="/posts"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={closeMobileMenu}
               className="block px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-primary-50 transition-colors font-medium text-sm rounded-lg"
             >
               일반 게시판
             </Link>
             <Link
               href="/posts?category=game-recommend"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={closeMobileMenu}
               className="block px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-primary-50 transition-colors font-medium text-sm rounded-lg"
             >
               게임 추천
             </Link>
             <Link
               href="/games"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={closeMobileMenu}
               className="block px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-primary-50 transition-colors font-medium text-sm rounded-lg"
             >
               인기 게임
@@ -166,7 +178,7 @@ export default function Navbar() {
                 {session.user?.isAdmin && (
                   <Link
                     href="/admin"
-                    onClick={() => setMobileMenuOpen(false)}
+                    onClick={closeMobileMenu}
                     className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-primary-50 transition-colors font-medium text-sm rounded-lg"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -177,7 +189,7 @@ export default function Navbar() {
                 )}
                 <Link
                   href={`/users/${encodeURIComponent(session.user?.email || '')}`}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={closeMobileMenu}
                   className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-primary-50 transition-colors font-medium text-sm rounded-lg"
                 >
                   {session.user?.image ? (
@@ -198,8 +210,8 @@ export default function Navbar() {
                 </Link>
                 <button
                   onClick={() => {
-                    signOut()
-                    setMobileMenuOpen(false)
+                    handleSignOut()
+                    closeMobileMenu()
                   }}
                   className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors font-medium text-sm rounded-lg"
                 >
@@ -209,7 +221,7 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={closeMobileMenu}
                 className="block px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200 font-medium text-sm text-center"
               >
                 로그인
@@ -221,3 +233,5 @@ export default function Navbar() {
     </nav>
   )
 }
+
+export default memo(Navbar)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, memo } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
@@ -10,7 +10,7 @@ interface LikeButtonProps {
   initialCount: number
 }
 
-export default function LikeButton({ postId, initialLiked, initialCount }: LikeButtonProps) {
+function LikeButton({ postId, initialLiked, initialCount }: LikeButtonProps) {
   const { data: session } = useSession()
   const router = useRouter()
   const [liked, setLiked] = useState(initialLiked)
@@ -31,7 +31,7 @@ export default function LikeButton({ postId, initialLiked, initialCount }: LikeB
     checkLike()
   }, [postId, session])
 
-  const handleLike = async () => {
+  const handleLike = useCallback(async () => {
     if (!session) {
       router.push('/login')
       return
@@ -54,7 +54,7 @@ export default function LikeButton({ postId, initialLiked, initialCount }: LikeB
     } finally {
       setLoading(false)
     }
-  }
+  }, [session, router, postId])
 
   return (
     <button
@@ -83,6 +83,8 @@ export default function LikeButton({ postId, initialLiked, initialCount }: LikeB
     </button>
   )
 }
+
+export default memo(LikeButton)
 
 
 

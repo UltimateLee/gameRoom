@@ -4,11 +4,23 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale/ko'
-import CommentSection from '@/components/CommentSection'
-import DeleteButton from '@/components/DeleteButton'
-import LikeButton from '@/components/LikeButton'
-import BookmarkButton from '@/components/BookmarkButton'
-import ShareButton from '@/components/ShareButton'
+import dynamic from 'next/dynamic'
+
+const CommentSection = dynamic(() => import('@/components/CommentSection'), {
+  ssr: true,
+})
+const DeleteButton = dynamic(() => import('@/components/DeleteButton'), {
+  ssr: false,
+})
+const LikeButton = dynamic(() => import('@/components/LikeButton'), {
+  ssr: false,
+})
+const BookmarkButton = dynamic(() => import('@/components/BookmarkButton'), {
+  ssr: false,
+})
+const ShareButton = dynamic(() => import('@/components/ShareButton'), {
+  ssr: false,
+})
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -16,38 +28,55 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const session = await getServerSession(authOptions)
   const resolvedParams = await Promise.resolve(params)
   
-  // 조회수 증가
-  await prisma.post.update({
-    where: { id: resolvedParams.id },
-    data: { viewCount: { increment: 1 } },
-  })
-
-  const post = await prisma.post.findUnique({
-    where: { id: resolvedParams.id },
-    include: {
-      author: {
-        select: {
-          name: true,
-          email: true,
-          image: true,
-        },
-      },
-      comments: {
-        include: {
-          author: {
-            select: {
-              name: true,
-              email: true,
-              image: true,
-            },
+  // 조회수 증가와 게시글 조회를 병렬로 처리
+  const [post] = await Promise.all([
+    prisma.post.findUnique({
+      where: { id: resolvedParams.id },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        contentBlocks: true,
+        category: true,
+        images: true,
+        gameInfo: true,
+        tags: true,
+        viewCount: true,
+        likeCount: true,
+        createdAt: true,
+        updatedAt: true,
+        author: {
+          select: {
+            name: true,
+            email: true,
+            image: true,
           },
         },
-        orderBy: {
-          createdAt: 'asc',
+        comments: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            author: {
+              select: {
+                name: true,
+                email: true,
+                image: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
         },
       },
-    },
-  })
+    }),
+    // 조회수는 백그라운드에서 처리 (await 하지 않음)
+    prisma.post.update({
+      where: { id: resolvedParams.id },
+      data: { viewCount: { increment: 1 } },
+    }).catch(() => {}), // 에러 무시
+  ])
 
   if (!post) {
     notFound()
@@ -58,39 +87,36 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const contentBlocks = (post as any).contentBlocks ? JSON.parse((post as any).contentBlocks) : null
   const gameInfo = post.gameInfo ? JSON.parse(post.gameInfo) : null
   const tags = (post as any).tags ? JSON.parse((post as any).tags) : []
-  const userBookmarked = session?.user?.email
+  // 북마크와 좋아요 상태를 병렬로 조회
+  const [userBookmarked, userLiked] = session?.user?.email
     ? await (async () => {
         const user = await prisma.user.findUnique({
           where: { email: session.user.email },
+          select: { id: true },
         })
-        if (!user) return false
-        const bookmark = await prisma.bookmark.findUnique({
-          where: {
-            postId_userId: {
-              postId: resolvedParams.id,
-              userId: user.id,
+        if (!user) return [false, null]
+        
+        const [bookmark, like] = await Promise.all([
+          prisma.bookmark.findUnique({
+            where: {
+              postId_userId: {
+                postId: resolvedParams.id,
+                userId: user.id,
+              },
             },
-          },
-        })
-        return !!bookmark
+          }),
+          prisma.like.findUnique({
+            where: {
+              postId_userId: {
+                postId: resolvedParams.id,
+                userId: user.id,
+              },
+            },
+          }),
+        ])
+        return [!!bookmark, like]
       })()
-    : false
-  let userLiked = null
-  if (session?.user?.email) {
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    })
-    if (user) {
-      userLiked = await prisma.like.findUnique({
-        where: {
-          postId_userId: {
-            postId: resolvedParams.id,
-            userId: user.id,
-          },
-        },
-      })
-    }
-  }
+    : [false, null]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
@@ -296,6 +322,8 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                             fill
                             className="object-cover"
                             unoptimized={url.startsWith('/uploads/')}
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                            loading="lazy"
                           />
                         )}
                       </div>

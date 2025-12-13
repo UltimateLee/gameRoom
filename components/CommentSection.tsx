@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback, useMemo, memo } from 'react'
 import { useSession } from 'next-auth/react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale/ko'
@@ -23,7 +23,7 @@ interface CommentSectionProps {
   comments: Comment[]
 }
 
-export default function CommentSection({ postId, comments: initialComments }: CommentSectionProps) {
+function CommentSection({ postId, comments: initialComments }: CommentSectionProps) {
   const { data: session } = useSession()
   const router = useRouter()
   const [comments, setComments] = useState(initialComments)
@@ -31,7 +31,7 @@ export default function CommentSection({ postId, comments: initialComments }: Co
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!session) {
@@ -54,7 +54,7 @@ export default function CommentSection({ postId, comments: initialComments }: Co
       if (!response.ok) {
         setError(data.error || '댓글 작성에 실패했습니다.')
       } else {
-        setComments([...comments, data])
+        setComments(prev => [...prev, data])
         setContent('')
         router.refresh()
       }
@@ -63,7 +63,7 @@ export default function CommentSection({ postId, comments: initialComments }: Co
     } finally {
       setLoading(false)
     }
-  }
+  }, [session, router, content, postId])
 
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl border border-gray-100 p-4 sm:p-6 md:p-8 lg:p-10">

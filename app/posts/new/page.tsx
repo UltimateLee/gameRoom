@@ -24,6 +24,7 @@ export default function NewPostPage() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -86,6 +87,35 @@ export default function NewPostPage() {
     const newBlocks = [...contentBlocks]
     newBlocks.splice(index + 1, 0, { type: 'text', content: '' })
     setContentBlocks(newBlocks)
+  }
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+  }
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault()
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null)
+      return
+    }
+
+    const newBlocks = [...contentBlocks]
+    const draggedBlock = newBlocks[draggedIndex]
+    
+    newBlocks.splice(draggedIndex, 1)
+    newBlocks.splice(dropIndex, 0, draggedBlock)
+    
+    setContentBlocks(newBlocks)
+    setDraggedIndex(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -329,7 +359,25 @@ export default function NewPostPage() {
             </label>
             <div className="space-y-3 sm:space-y-4">
               {contentBlocks.map((block, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg sm:rounded-xl p-3 sm:p-4 bg-gray-50">
+                <div
+                  key={index}
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
+                  className={`border border-gray-200 rounded-lg sm:rounded-xl p-3 sm:p-4 bg-gray-50 cursor-move transition-all ${
+                    draggedIndex === index ? 'opacity-50 border-primary-400 scale-95' : 'hover:border-primary-300 hover:shadow-md'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-200">
+                    <div className="flex items-center gap-1 text-gray-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                      </svg>
+                      <span className="text-xs">드래그하여 이동</span>
+                    </div>
+                  </div>
                   {block.type === 'text' ? (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -364,9 +412,12 @@ export default function NewPostPage() {
                       <textarea
                         value={block.content || ''}
                         onChange={(e) => {
-                          const newBlocks = [...contentBlocks]
-                          newBlocks[index] = { ...newBlocks[index], content: e.target.value }
-                          setContentBlocks(newBlocks)
+                          const value = e.target.value
+                          setContentBlocks(prev => {
+                            const newBlocks = [...prev]
+                            newBlocks[index] = { ...newBlocks[index], content: value }
+                            return newBlocks
+                          })
                         }}
                         placeholder="내용을 입력하세요..."
                         rows={5}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, memo } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
@@ -9,7 +9,7 @@ interface BookmarkButtonProps {
   initialBookmarked: boolean
 }
 
-export default function BookmarkButton({ postId, initialBookmarked }: BookmarkButtonProps) {
+function BookmarkButton({ postId, initialBookmarked }: BookmarkButtonProps) {
   const { data: session } = useSession()
   const router = useRouter()
   const [bookmarked, setBookmarked] = useState(initialBookmarked)
@@ -29,7 +29,7 @@ export default function BookmarkButton({ postId, initialBookmarked }: BookmarkBu
     checkBookmark()
   }, [postId, session])
 
-  const handleBookmark = async () => {
+  const handleBookmark = useCallback(async () => {
     if (!session) {
       router.push('/login')
       return
@@ -51,7 +51,7 @@ export default function BookmarkButton({ postId, initialBookmarked }: BookmarkBu
     } finally {
       setLoading(false)
     }
-  }
+  }, [session, router, postId])
 
   return (
     <button
@@ -81,6 +81,8 @@ export default function BookmarkButton({ postId, initialBookmarked }: BookmarkBu
     </button>
   )
 }
+
+export default memo(BookmarkButton)
 
 
 

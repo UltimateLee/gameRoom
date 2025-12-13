@@ -9,7 +9,15 @@ export default async function Home() {
   
   const [latestPosts, popularPosts] = await Promise.all([
     prisma.post.findMany({
-      include: {
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        category: true,
+        tags: true,
+        createdAt: true,
+        viewCount: true,
+        likeCount: true,
         author: {
           select: {
             name: true,
@@ -17,7 +25,11 @@ export default async function Home() {
             image: true,
           },
         },
-        comments: true,
+        _count: {
+          select: {
+            comments: true,
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -25,7 +37,15 @@ export default async function Home() {
       take: 10,
     }),
     prisma.post.findMany({
-      include: {
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        category: true,
+        tags: true,
+        createdAt: true,
+        viewCount: true,
+        likeCount: true,
         author: {
           select: {
             name: true,
@@ -33,7 +53,11 @@ export default async function Home() {
             image: true,
           },
         },
-        comments: true,
+        _count: {
+          select: {
+            comments: true,
+          },
+        },
       },
       orderBy: {
         likeCount: 'desc',
@@ -42,21 +66,23 @@ export default async function Home() {
     }),
   ])
 
-  // 조회수 및 좋아요 정보 포함
+  // 데이터 포맷팅
   const latestPostsWithViewCount = latestPosts.map((post) => ({
     ...post,
-    viewCount: (post as any).viewCount || 0,
-    likeCount: (post as any).likeCount || 0,
+    viewCount: post.viewCount || 0,
+    likeCount: post.likeCount || 0,
     tags: post.tags ?? undefined,
     category: post.category ?? undefined,
+    comments: Array(post._count.comments).fill({ id: '' }).map((_, i) => ({ id: `temp-${i}` })),
   }))
 
   const popularPostsWithViewCount = popularPosts.map((post) => ({
     ...post,
-    viewCount: (post as any).viewCount || 0,
-    likeCount: (post as any).likeCount || 0,
+    viewCount: post.viewCount || 0,
+    likeCount: post.likeCount || 0,
     tags: post.tags ?? undefined,
     category: post.category ?? undefined,
+    comments: Array(post._count.comments).fill({ id: '' }).map((_, i) => ({ id: `temp-${i}` })),
   }))
 
   return (

@@ -46,7 +46,15 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   const [posts, totalCount] = await Promise.all([
     prisma.post.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        category: true,
+        tags: true,
+        createdAt: true,
+        viewCount: true,
+        likeCount: true,
         author: {
           select: {
             name: true,
@@ -54,7 +62,11 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
             image: true,
           },
         },
-        comments: true,
+        _count: {
+          select: {
+            comments: true,
+          },
+        },
       },
       orderBy,
       skip,
@@ -94,9 +106,10 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
         <PostList
           initialPosts={posts.map((post) => ({
             ...post,
-            likeCount: (post as any).likeCount || 0,
+            likeCount: post.likeCount || 0,
             tags: post.tags ?? undefined,
             category: post.category ?? undefined,
+            comments: Array(post._count.comments).fill({ id: '' }).map((_, i) => ({ id: `temp-${i}` })),
           }))}
           initialPage={page}
           initialTotalPages={totalPages}

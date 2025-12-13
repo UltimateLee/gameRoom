@@ -25,6 +25,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [postId, setPostId] = useState<string>('')
   const [uploading, setUploading] = useState(false)
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
 
   useEffect(() => {
     const resolveParams = async () => {
@@ -401,7 +402,25 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             </label>
             <div className="space-y-3 sm:space-y-4">
               {contentBlocks.map((block, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg sm:rounded-xl p-3 sm:p-4 bg-gray-50">
+                <div
+                  key={index}
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
+                  className={`border border-gray-200 rounded-lg sm:rounded-xl p-3 sm:p-4 bg-gray-50 cursor-move transition-all ${
+                    draggedIndex === index ? 'opacity-50 border-primary-400 scale-95' : 'hover:border-primary-300 hover:shadow-md'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-200">
+                    <div className="flex items-center gap-1 text-gray-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                      </svg>
+                      <span className="text-xs">드래그하여 이동</span>
+                    </div>
+                  </div>
                   {block.type === 'text' ? (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -435,9 +454,12 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                       <textarea
                         value={block.content || ''}
                         onChange={(e) => {
-                          const newBlocks = [...contentBlocks]
-                          newBlocks[index] = { ...newBlocks[index], content: e.target.value }
-                          setContentBlocks(newBlocks)
+                          const value = e.target.value
+                          setContentBlocks(prev => {
+                            const newBlocks = [...prev]
+                            newBlocks[index] = { ...newBlocks[index], content: value }
+                            return newBlocks
+                          })
                         }}
                         rows={5}
                         className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all resize-none bg-white text-sm sm:text-base"
