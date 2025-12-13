@@ -12,6 +12,16 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['date-fns', '@prisma/client'],
   },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Prisma 바이너리 파일을 번들에 포함
+      config.externals = config.externals || []
+      config.externals.push({
+        '@prisma/client': '@prisma/client',
+      })
+    }
+    return config
+  },
 }
 
 module.exports = nextConfig
