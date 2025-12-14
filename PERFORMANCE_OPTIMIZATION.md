@@ -84,3 +84,4 @@ npm run start
 - **TTI (Time to Interactive)**: < 3.8초
 - **TBT (Total Blocking Time)**: < 200ms
 
+

@@ -64,3 +64,4 @@ git push
 - `"rhel-openssl-3.0.x"`는 Vercel의 Linux 환경용
 - 두 개를 모두 포함하면 로컬과 프로덕션 모두에서 작동합니다
 
+

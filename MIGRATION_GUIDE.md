@@ -92,3 +92,4 @@ UPDATE "User" SET "isAdmin" = true WHERE email = 'admin@game.com';
 마이그레이션은 기존 데이터를 유지하면서 컬럼만 추가합니다. 안전하게 실행할 수 있습니다.
 
 
+

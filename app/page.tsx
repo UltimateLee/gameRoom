@@ -4,10 +4,13 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import PostCard from '@/components/PostCard'
 
+// ISR: 1시간마다 재검증
+export const revalidate = 3600
+
 export default async function Home() {
   const session = await getServerSession(authOptions)
   
-  const [latestPosts, popularPosts] = await Promise.all([
+  const [latestPosts, popularPosts, patchNotes] = await Promise.all([
     prisma.post.findMany({
       select: {
         id: true,
@@ -63,6 +66,21 @@ export default async function Home() {
         likeCount: 'desc',
       },
       take: 5,
+    }),
+    prisma.patchNote.findMany({
+      select: {
+        id: true,
+        game: true,
+        title: true,
+        summary: true,
+        originalUrl: true,
+        publishedAt: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 3,
     }),
   ])
 
@@ -131,6 +149,64 @@ export default async function Home() {
           </div>
         ) : (
           <>
+            {patchNotes.length > 0 && (
+              <div className="mb-8 sm:mb-12">
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    최신 패치노트
+                  </h2>
+                </div>
+                <div className="grid gap-4 sm:gap-6">
+                  {patchNotes.map((note) => {
+                    const gameNames: Record<string, { name: string; color: string }> = {
+                      lol: { name: '리그 오브 레전드', color: 'bg-yellow-100 text-yellow-800' },
+                      valorant: { name: '발로란트', color: 'bg-red-100 text-red-800' },
+                      pubg: { name: '배틀그라운드', color: 'bg-green-100 text-green-800' },
+                    }
+                    const gameInfo = gameNames[note.game] || { name: note.game, color: 'bg-gray-100 text-gray-800' }
+                    
+                    return (
+                      <div
+                        key={note.id}
+                        className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-md hover:shadow-lg transition-shadow border border-gray-100"
+                      >
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-semibold rounded-full ${gameInfo.color}`}>
+                              {gameInfo.name}
+                            </span>
+                            <span className="text-xs sm:text-sm text-gray-500">
+                              {new Date(note.publishedAt).toLocaleDateString('ko-KR')}
+                            </span>
+                          </div>
+                        </div>
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3 line-clamp-2">
+                          {note.title}
+                        </h3>
+                        <p className="text-sm sm:text-base text-gray-700 mb-3 sm:mb-4 line-clamp-3">
+                          {note.summary}
+                        </p>
+                        <a
+                          href={note.originalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium text-sm sm:text-base transition-colors"
+                        >
+                          원문 보기
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
             {popularPostsWithViewCount.length > 0 && (
               <div className="mb-8 sm:mb-12">
                 <div className="flex items-center justify-between mb-4 sm:mb-6">

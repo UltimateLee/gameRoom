@@ -3,6 +3,12 @@
   "devCommand": "next dev",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "regions": ["icn1"]
+  "regions": ["icn1"],
+  "crons": [
+    {
+      "path": "/api/cron/patch-note",
+      "schedule": "0 9 * * *"
+    }
+  ]
 }
 

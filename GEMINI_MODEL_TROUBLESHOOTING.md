@@ -66,3 +66,4 @@ models/gemini-1.5-flash is not found for API version v1beta
 - [Generative AI API 문서](https://ai.google.dev/docs)
 - [Google Cloud Console](https://console.cloud.google.com/)
 
+

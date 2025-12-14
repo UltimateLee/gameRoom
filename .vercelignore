@@ -1,3 +1,4 @@
 # Prisma 바이너리는 포함되어야 하므로 제외하지 않음
 # node_modules/.prisma/client는 반드시 포함되어야 함
 
+

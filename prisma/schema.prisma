@@ -80,3 +80,18 @@ model Bookmark {
   @@unique([postId, userId])
 }
 
+model PatchNote {
+  id          String   @id @default(cuid())
+  game        String   // "lol", "valorant", "pubg"
+  title       String
+  originalUrl String
+  originalContent String @db.Text // 원본 전체 내용
+  summary     String   @db.Text // AI 요약본
+  publishedAt DateTime // 게임 사이트에서 발행된 날짜
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([game, title]) // 같은 게임에서 같은 제목은 중복 방지
+  @@index([game, createdAt]) // 게임별 최신순 조회 최적화
+}
+

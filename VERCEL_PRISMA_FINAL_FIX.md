@@ -98,3 +98,4 @@ Vercel Dashboard → Settings → Functions에서:
 - `'*'` 패턴은 모든 경로에 적용됩니다
 - Prisma 바이너리는 반드시 포함되어야 합니다
 
+

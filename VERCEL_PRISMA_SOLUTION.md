@@ -89,3 +89,4 @@ Vercel Dashboard → Deployments → 최신 배포 → "..." → "Redeploy"
 - `"rhel-openssl-3.0.x"`는 Vercel의 Linux 환경용
 - `engineType = "binary"`는 바이너리 엔진 사용 명시
 
+
