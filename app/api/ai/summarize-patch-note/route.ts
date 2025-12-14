@@ -42,16 +42,40 @@ export async function POST(request: Request) {
 
     const gameName = gameNames[game as string] || game
 
-    // 프롬프트 생성
-    const prompt = `${gameName} 패치노트를 분석하여 다음 형식으로 요약해주세요:
+    // 프롬프트 생성 (게임별 맞춤)
+    let prompt = ''
+    if (game === 'lol') {
+      prompt = `${gameName} 패치노트를 분석하여 다음 형식으로 요약해주세요:
 
-1. 핵심 버프/너프 3가지 (챔피언, 무기, 아이템 등)
+1. 핵심 버프/너프 3가지 (챔피언, 아이템, 룬 등)
 2. 시스템 변경 1가지 (게임 모드, UI, 밸런스 등)
 
 요약은 3줄 이내로 간결하게 작성해주세요. 한국어로 답변해주세요.
 
 패치노트 내용:
-${content.substring(0, 8000)}` // 토큰 제한을 위해 8000자로 제한
+${content.substring(0, 15000)}`
+    } else if (game === 'valorant') {
+      prompt = `${gameName} 패치노트를 분석하여 다음 형식으로 요약해주세요:
+
+1. 핵심 변경사항 3가지 (요원, 무기, 맵 등)
+2. 시스템 변경 1가지 (게임 모드, UI, 밸런스 등)
+
+요약은 3줄 이내로 간결하게 작성해주세요. 한국어로 답변해주세요.
+
+패치노트 내용:
+${content.substring(0, 15000)}`
+    } else {
+      // PUBG - 버프/너프가 아닌 업데이트 내용 중심
+      prompt = `${gameName} 패치노트를 분석하여 다음 형식으로 요약해주세요:
+
+1. 주요 업데이트 내용 3가지 (맵, 무기, 아이템, 게임 모드 등)
+2. 시스템 변경 1가지 (UI, 버그 수정, 밸런스 등)
+
+요약은 3줄 이내로 간결하게 작성해주세요. 한국어로 답변해주세요.
+
+패치노트 내용:
+${content.substring(0, 15000)}`
+    }
 
     // 모델 목록 (우선순위 순)
     const modelNames = [
