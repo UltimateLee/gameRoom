@@ -236,11 +236,13 @@ async function scrapeValorantArticle(url: string): Promise<PatchNoteData | null>
 // 배틀그라운드 패치노트 크롤링
 export async function scrapePUBG(): Promise<PatchNoteData | null> {
   try {
-    // PUBG 공식 사이트의 패치노트 페이지
-    const url = 'https://pubg.com/ko/news'
+    // PUBG 공식 사이트의 패치노트 목록 페이지
+    const url = 'https://pubg.com/ko/news?category=patch_notes'
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
       },
     })
 
@@ -252,18 +254,35 @@ export async function scrapePUBG(): Promise<PatchNoteData | null> {
     const root = parse(html)
 
     // 패치노트 관련 링크 찾기 (여러 패턴 시도)
-    let patchNoteLink = root.querySelector('a[href*="patch"], a[href*="update"]')
-      || root.querySelector('a[href*="patch_notes"]')
+    // 첫 번째 패치노트 링크 찾기 (최신 패치노트)
+    let patchNoteLink = root.querySelector('a[href*="/news/"]')
+      || root.querySelector('a[href*="patch"]')
+      || root.querySelector('a[href*="update"]')
       || root.querySelector('a[href*="category=patch"]')
     
     if (!patchNoteLink) {
-      // 더 넓은 범위로 검색
-      const allLinks = root.querySelectorAll('a[href*="patch"], a[href*="update"], a[href*="news"]')
+      // 더 넓은 범위로 검색 - 뉴스 아이템이나 카드에서 링크 찾기
+      const newsItems = root.querySelectorAll('article, .news-item, .post, .news-card, [class*="news"], [class*="article"]')
+      for (const item of newsItems) {
+        const link = item.querySelector('a[href*="/news/"], a[href*="patch"], a[href*="update"]')
+        if (link) {
+          const href = link.getAttribute('href') || ''
+          // 패치노트 링크인지 확인 (숫자 ID가 있는 링크)
+          if (href.includes('/news/') && /\d+/.test(href)) {
+            patchNoteLink = link
+            break
+          }
+        }
+      }
+    }
+
+    if (!patchNoteLink) {
+      // 대체: 모든 링크를 검색하여 패치노트 링크 찾기
+      const allLinks = root.querySelectorAll('a[href*="/news/"], a[href*="patch"], a[href*="update"]')
       for (const link of allLinks) {
         const href = link.getAttribute('href') || ''
-        const text = link.text.trim().toLowerCase()
-        if ((href.includes('patch') || href.includes('update') || text.includes('패치')) 
-            && (href.includes('news') || href.includes('/ko/'))) {
+        // 패치노트 상세 페이지 링크 형식: /ko/news/숫자
+        if (href.includes('/news/') && /\d+/.test(href)) {
           patchNoteLink = link
           break
         }
@@ -271,26 +290,29 @@ export async function scrapePUBG(): Promise<PatchNoteData | null> {
     }
 
     if (!patchNoteLink) {
-      // 대체: 첫 번째 뉴스 기사
-      const firstArticle = root.querySelector('article, .news-item, .post, .news-card')
-      if (!firstArticle) {
-        console.error('PUBG: 패치노트 링크를 찾을 수 없습니다')
-        return null
-      }
-      const articleLink = firstArticle.querySelector('a')
-      const articleUrl = articleLink?.getAttribute('href') || ''
-      const fullUrl = articleUrl.startsWith('http') ? articleUrl : `https://pubg.com${articleUrl}`
-      
-      return await scrapePUBGArticle(fullUrl)
+      console.error('PUBG: 패치노트 링크를 찾을 수 없습니다')
+      return null
     }
 
     const articleUrl = patchNoteLink.getAttribute('href') || ''
-    const fullUrl = articleUrl.startsWith('http') 
-      ? articleUrl 
-      : articleUrl.startsWith('/') 
-        ? `https://pubg.com${articleUrl}`
-        : `https://pubg.com/${articleUrl}`
+    // URL 구성 (상대 경로 처리)
+    let fullUrl = ''
+    if (articleUrl.startsWith('http')) {
+      fullUrl = articleUrl
+    } else if (articleUrl.startsWith('/')) {
+      fullUrl = `https://pubg.com${articleUrl}`
+      // category 파라미터가 없으면 추가
+      if (!fullUrl.includes('category=')) {
+        fullUrl += (fullUrl.includes('?') ? '&' : '?') + 'category=patch_notes'
+      }
+    } else {
+      fullUrl = `https://pubg.com/${articleUrl}`
+      if (!fullUrl.includes('category=')) {
+        fullUrl += (fullUrl.includes('?') ? '&' : '?') + 'category=patch_notes'
+      }
+    }
 
+    console.log(`PUBG: 패치노트 링크 발견: ${fullUrl}`)
     return await scrapePUBGArticle(fullUrl)
   } catch (error) {
     console.error('PUBG 크롤링 오류:', error)
@@ -303,6 +325,8 @@ async function scrapePUBGArticle(url: string): Promise<PatchNoteData | null> {
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
       },
     })
 
@@ -319,15 +343,17 @@ async function scrapePUBGArticle(url: string): Promise<PatchNoteData | null> {
       || root.querySelector('title')
     const title = titleEl?.text.trim() || ''
 
-    // 본문 추출 (불필요한 요소 제거)
+    // 불필요한 요소 제거
     const scripts = root.querySelectorAll('script')
     const styles = root.querySelectorAll('style')
     const navs = root.querySelectorAll('nav')
     const headers = root.querySelectorAll('header')
     const footers = root.querySelectorAll('footer')
     const asides = root.querySelectorAll('aside')
-    const ads = root.querySelectorAll('.ad, .advertisement, .ads, [class*="ad-"]')
-    const socials = root.querySelectorAll('.social, .share, [class*="social"]')
+    const ads = root.querySelectorAll('.ad, .advertisement, .ads, [class*="ad-"], [id*="ad-"]')
+    const socials = root.querySelectorAll('.social, .share, [class*="social"], [class*="share"]')
+    const menus = root.querySelectorAll('nav, .menu, .navigation, [role="navigation"]')
+    const breadcrumbs = root.querySelectorAll('.breadcrumb, .breadcrumbs, [class*="breadcrumb"]')
     
     scripts.forEach(el => el.remove())
     styles.forEach(el => el.remove())
@@ -337,50 +363,66 @@ async function scrapePUBGArticle(url: string): Promise<PatchNoteData | null> {
     asides.forEach(el => el.remove())
     ads.forEach(el => el.remove())
     socials.forEach(el => el.remove())
+    menus.forEach(el => el.remove())
+    breadcrumbs.forEach(el => el.remove())
 
     // 본문 추출 (여러 선택자 시도, 우선순위 순)
     let article = root.querySelector('article') 
-      || root.querySelector('.article-content, .article-body')
-      || root.querySelector('.post-content, .news-content')
+      || root.querySelector('.article-content, .article-body, .article-text')
+      || root.querySelector('.post-content, .news-content, .news-body')
+      || root.querySelector('.patch-note-content, .patch-content')
       || root.querySelector('main')
-      || root.querySelector('.content, .main-content')
+      || root.querySelector('.content, .main-content, .page-content')
       || root.querySelector('[role="article"]')
-      || root.querySelector('.patch-note-content')
+      || root.querySelector('.news-detail, .news-detail-content')
     
     let content = ''
     
     if (article) {
-      // article 내부의 본문만 추출 (제목 제외)
-      const titleInArticle = article.querySelector('h1, h2, .title')
-      if (titleInArticle) {
-        titleInArticle.remove()
-      }
+      // article 내부의 본문만 추출 (제목, 메타 정보 제외)
+      const titleInArticle = article.querySelector('h1, h2, .title, .article-title')
+      const metaInArticle = article.querySelector('.meta, .date, .author, .published, time')
+      const buttonsInArticle = article.querySelectorAll('button, .btn, a[class*="button"]')
+      
+      if (titleInArticle) titleInArticle.remove()
+      if (metaInArticle) metaInArticle.remove()
+      buttonsInArticle.forEach(el => el.remove())
+      
       content = article.text.trim()
-    } else {
-      // article을 찾지 못한 경우 body에서 추출하되, 불필요한 부분 제거
-      const body = root.querySelector('body')
-      if (body) {
-        // 본문이 될 수 있는 섹션 찾기
-        const mainSections = body.querySelectorAll('section, div[class*="content"], div[class*="article"]')
-        for (const section of mainSections) {
-          const sectionText = section.text.trim()
-          if (sectionText.length > 500) { // 충분히 긴 섹션만 본문으로 간주
-            content += sectionText + ' '
+    }
+    
+    // 본문이 너무 짧거나 없으면 더 넓은 범위에서 추출
+    if (content.length < 2000) {
+      // 모든 섹션과 div를 확인하여 가장 긴 텍스트를 본문으로 사용
+      const allSections = root.querySelectorAll('section, div, main')
+      let longestContent = content
+      
+      for (const section of allSections) {
+        // 이미 제거된 요소들의 텍스트는 제외
+        const sectionText = section.text.trim()
+        // 충분히 길고, 제목만 있는 것이 아닌 섹션
+        if (sectionText.length > longestContent.length && sectionText.length > 1000) {
+          // 제목만 있는 섹션은 제외 (텍스트가 너무 짧거나 특정 패턴)
+          const hasMultipleParagraphs = section.querySelectorAll('p, li, div').length > 3
+          if (hasMultipleParagraphs || sectionText.length > 2000) {
+            longestContent = sectionText
           }
         }
-        if (!content) {
-          content = body.text.trim()
-        }
       }
-    }
-
-    // 본문이 너무 짧으면 더 넓은 범위에서 추출
-    if (content.length < 1000) {
-      const mainContent = root.querySelector('main, .main-content, #main-content, .news-detail')
-      if (mainContent) {
-        const mainText = mainContent.text.trim()
-        if (mainText.length > content.length) {
-          content = mainText
+      
+      if (longestContent.length > content.length) {
+        content = longestContent
+      }
+      
+      // 여전히 짧으면 body에서 직접 추출
+      if (content.length < 2000) {
+        const body = root.querySelector('body')
+        if (body) {
+          // body에서 가장 긴 텍스트 블록 찾기
+          const bodyText = body.text.trim()
+          if (bodyText.length > content.length) {
+            content = bodyText
+          }
         }
       }
     }
@@ -388,14 +430,19 @@ async function scrapePUBGArticle(url: string): Promise<PatchNoteData | null> {
     // 날짜 추출
     const timeEl = root.querySelector('time[datetime]') 
       || root.querySelector('[datetime]')
-      || root.querySelector('.article-date, .post-date, .published-date, .date')
+      || root.querySelector('.article-date, .post-date, .published-date, .date, .publish-date')
     const dateText = timeEl?.getAttribute('datetime') || timeEl?.text.trim() || ''
     const publishedAt = dateText ? new Date(dateText) : new Date()
+
+    // 디버깅: 본문 길이 로그
+    if (content.length < 500) {
+      console.warn(`PUBG: 본문이 너무 짧습니다 (${content.length}자). URL: ${url}`)
+    }
 
     return {
       title,
       url,
-      content: content.replace(/\s+/g, ' ').substring(0, 50000), // 최대 50000자로 증가
+      content: content.replace(/\s+/g, ' ').substring(0, 50000), // 최대 50000자
       publishedAt,
     }
   } catch (error) {

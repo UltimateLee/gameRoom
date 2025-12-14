@@ -66,12 +66,19 @@ ${content.substring(0, 15000)}`
 ${content.substring(0, 15000)}`
     } else {
       // PUBG - 버프/너프가 아닌 업데이트 내용 중심
+      // 본문이 짧을 경우를 대비한 안내 추가
+      const contentLength = content.length
+      const contentNote = contentLength < 500 
+        ? '\n\n※ 주의: 제공된 내용이 짧습니다. 가능한 범위에서 요약해주세요.'
+        : ''
+      
       prompt = `${gameName} 패치노트를 분석하여 다음 형식으로 요약해주세요:
 
-1. 주요 업데이트 내용 3가지 (맵, 무기, 아이템, 게임 모드 등)
-2. 시스템 변경 1가지 (UI, 버그 수정, 밸런스 등)
+1. 주요 업데이트 내용 3가지 (맵, 무기, 아이템, 게임 모드, 신규 기능 등)
+2. 시스템 변경 1가지 (UI, 버그 수정, 밸런스, 성능 개선 등)
 
 요약은 3줄 이내로 간결하게 작성해주세요. 한국어로 답변해주세요.
+${contentNote}
 
 패치노트 내용:
 ${content.substring(0, 15000)}`
