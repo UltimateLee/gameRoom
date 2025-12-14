@@ -3,6 +3,10 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { scrapeGame, GameType } from '@/lib/scraper'
 
+// 동적 라우트로 강제 설정 (빌드 타임 정적 생성 방지)
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 // Vercel Cron에서 호출하는 API Route
 // Authorization 헤더로 보안 처리
 export async function GET(request: Request) {
